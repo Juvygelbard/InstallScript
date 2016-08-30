@@ -3,6 +3,10 @@ from os.path import expanduser
 from xml.etree import ElementTree
 from sys import argv
 
+# TODO: handle 'source'
+# TODO: add 'cond' option
+# TODO: add 'tree' command
+
 INSTALL_XML = 'deps.xml'
 LIST = False
 ASK = False
