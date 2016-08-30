@@ -5,12 +5,12 @@
         <dep>robotican</dep>
         <dep>bgumodo</dep>
         <run dir="~">
-            source /opt/ros/indigo/setup.bash
+            # source /opt/ros/indigo/setup.bash
         </run>
         <run dir="~/catkin_ws">
             # make pkgs and expend env
             catkin_make
-            source devel/setup.bash
+            # source devel/setup.bash
         </run>
     </dep>
 
@@ -29,7 +29,7 @@
             rosdep update
             # setup environment
             echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc
-            source .bashrc
+            # source .bashrc
             # install rosinstall
             sudo apt-get install python-rosinstall
         </run>

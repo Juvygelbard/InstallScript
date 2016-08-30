@@ -47,7 +47,7 @@ class Bash:
             else:
                 execode = call(ln, shell=True)
             if execode:
-                raise RuntimeError("Error while executing dependency %s: '%s'" %(self.dep, ln))
+                raise RuntimeError("Error while executing dependency '%s': '%s'" %(self.dep, ln))
 
 # class represents a single dependency
 class Dep:
@@ -171,7 +171,7 @@ class DepTree:
                 self.__rec_list__(prev_dep)
         self.__listed__.append(dep.name)
         self.__list_count__ += 1
-        print("%i   %s" %(self.__list_count__, dep.name))
+        print("%3i   %s" %(self.__list_count__, dep.name))
 
 dt = DepTree(INSTALL_XML)
 if NO_INST:
