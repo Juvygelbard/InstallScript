@@ -3,11 +3,14 @@
         <dep>ROS_indigo</dep>
         <dep>ROSPlan</dep>
         <dep>robotican</dep>
+        <dep>bgumodo</dep>
         <run dir="~">
             source /opt/ros/indigo/setup.bash
         </run>
         <run dir="~/catkin_ws">
+            # make and expend env
             catkin_make
+            source devel/setup.bash
         </run>
     </dep>
 
@@ -52,19 +55,29 @@
             git clone https://github.com/clearpathrobotics/occupancy_grid_utils
             git clone https://github.com/KCL-Planning/rosplan
         </run>
+        <run>
+            # copy updated .pddl file
+            cp -f aux/domain.pddl ~/catkin_ws/src/rosplan/rosplan_config/planner/
+        </run>
     </dep>
 
     <dep name="move_base">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
         <run dir="~/catkin_ws/src">
-            git clone https://github.com/ros-planning/navigation/ -b indigo-devel  --single-branch
+            sudo apt-get install ros-indigo-move-base
         </run>
     </dep>
 
     <dep name="robotican">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
+        <dep>qt_ros</dep>
+        <dep>moveit</dep>
+        <dep>control_toolbox</dep>
+        <dep>gazebo_ros_pkgs</dep>
+        <dep>serial</dep>
+        <dep>dynamixel_motor</dep>
         <run dir="~/catkin_ws">
             # currently using bgumodo/robotican/temp_branch
             # clone repository
@@ -76,5 +89,93 @@
         </run>
     </dep>
 
+    <dep name="qt_ros">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run dir="~/catkin_ws/src">
+            git clone https://github.com/stonier/qt_ros -b indigo --single-branch
+        </run>
+    </dep>
 
+    <dep name="moveit">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install ros-indigo-moveit-full
+        </run>
+    </dep>
+
+    <dep name="control_toolbox">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
+        </run>
+    </dep>
+
+    <dep name="gazebo_ros_pkgs">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install ros-indigo-gazebo-ros-pkgs ros-indigo-gazebo-ros-control
+        </run>
+    </dep>
+
+    <dep name="serial">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run dir="~/catkin_ws/src">
+            # get code
+            git clone https://github.com/wjwwood/serial.git
+        </run>
+        <run dir="~/catkin_ws/src/serial">
+            # make and install
+            make
+            make install
+        </run>
+    </dep>
+
+    <dep name="dynamixel_motor">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install ros-indigo-dynamixel-motor
+        </run>
+    </dep>
+
+    <dep name="bgumodo">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <dep>audio_common</dep>
+        <dep>pocketsphinx</dep>
+        <dep>gstreamer-0.10</dep>
+        <run dir="~/catkin_ws/src">
+            # get code
+            git clone https://github.com/bgumodo/bgumodo-dev.git
+        </run>
+    </dep>
+
+    <dep name="audio_common">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run dir="!/catkin_ws/src">
+            git clone https://github.com/ros-drivers/audio_common -b indigo-devel --single-branch
+        </run>
+    </dep>
+
+    <dep name="pocketsphinx">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install ros-indigo-pocketsphinx
+        </run>
+    </dep>
+
+    <dep name="gstreamer-0.10">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <run>
+            sudo apt-get install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+        </run>
+    </dep>
 </install>
