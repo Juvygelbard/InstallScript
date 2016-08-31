@@ -52,10 +52,11 @@ class Bash:
             self.dir = expanduser(dir)
 
     def to_file(self, file, prev_dir, pref):
+        # cd dir if needed
+        if prev_dir != self.dir:
+            file.write("%scd %s\n" % (pref, self.dir))
         # write bash line + check for error
         for ln in self.bash:
-            if prev_dir!=self.dir:
-                file.write("%scd %s\n" %(pref, self.dir))
             file.write("%s%s\n%sif [ $? != 0]; then exit $?; fi\n" %(pref, ln, pref))
         return self.dir
 
@@ -87,7 +88,7 @@ class Dep:
         pref = ""
         if ask:
             pref = "        "
-        file.write("echo \"%s[Installing Dependency: %s]\"\n" %(pref, self.name))
+        file.write("%secho \"[Installing Dependency: %s]\"\n" %(pref, self.name))
         # write bashes
         for bash in self.bashes:
             prev_dir = bash.to_file(file, prev_dir, pref)
