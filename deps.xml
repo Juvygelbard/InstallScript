@@ -4,9 +4,6 @@
         <dep>ROSPlan</dep>
         <dep>robotican</dep>
         <dep>bgumodo</dep>
-        <run dir="~">
-            source /opt/ros/indigo/setup.bash
-        </run>
         <run dir="~/catkin_ws">
             # make pkgs and expend env
             catkin_make
@@ -60,6 +57,10 @@
             # copy updated .pddl file
             cp -f aux/domain.pddl ~/catkin_ws/src/rosplan/rosplan_config/planner/
         </run>
+        <run dir="~/catkin_ws">
+            # compile
+            catkin_make
+        </run>
     </dep>
 
     <dep name="move_base">
@@ -87,6 +88,10 @@
         <run>
             # copy current work file
             cp -f aux/demo_pick_node.cpp ~/catkin_ws/src/robotican/robotican_demos/src/
+        </run>
+        <run dir="~/catkin_ws">
+            # compile
+            catkin_make
         </run>
     </dep>
 
