@@ -14,6 +14,12 @@
         </run>
     </dep>
 
+    <dep name="src">
+        <run dir="~/catkin_ws">
+            source devel/setup.bash
+        </run>
+    </dep>
+
     <dep name="ROS_indigo">
         <run dir="~">
             # accept software from packages.ros.org

@@ -1,10 +1,12 @@
-from subprocess import Popen, PIPE, STDOUT
-from time import sleep
+from subprocess import Popen, PIPE, call
+from os.path import expanduser
+from os import environ
 
-# proc = Popen("konsole", stdin=PIPE)
-# sleep(1)
-# proc.communicate(input=b'echo hi')
-
-p = Popen("source", stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-grep_stdout = p.communicate(input=b'one\ntwo\nthree\nfour\nfive\nsix\n')[0]
-print(grep_stdout.decode())
+# p = Popen(expanduser("sudo ~/catkin_ws/devel/setup.bash"))
+env_1={}
+print(len(env_1))
+p = Popen("./a.sh", shell=True, env=env_1, stdout=PIPE)
+raw_vars = p.communicate()[0].decode()
+vars = raw_vars.splitlines()
+print(len(vars))
+print(raw_vars)
