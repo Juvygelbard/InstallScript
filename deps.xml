@@ -34,7 +34,6 @@
 
     <dep name="init_ws">
         <run dir="~">
-            ls abc
             mkdir -p ~/catkin_ws/src
         </run>
         <run dir="~/catkin_ws/src">
