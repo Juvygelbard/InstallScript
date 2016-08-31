@@ -5,7 +5,7 @@ from stat import S_IEXEC
 from xml.etree import ElementTree
 from sys import argv
 
-# second version: build a new sh script for each run
+# final [compiler] version, including cond support and help
 
 # TODO: add 'cond' option
 
@@ -69,6 +69,7 @@ class Dep:
         self.name = name
         self.bashes = []
         self.deps = {}
+        self.conds = {}
 
     def add_dep(self, dep):
         self.deps.update({dep.name:dep})
@@ -89,6 +90,10 @@ class Dep:
 
     def add_bash(self, raw_bash, dir=None):
         self.bashes.append(Bash(self.name, raw_bash, dir))
+
+    def add_cond(self, raw_cond):
+        pass
+    # TODO: continue from here
 
     def to_file(self, file, prev_dir, ask):
         pref = ""

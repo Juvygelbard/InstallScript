@@ -1,13 +1,16 @@
-<install root="catkin_make">
-    <dep name="catkin_make">
+<install root="make_all">
+    <dep name="make_all">
         <dep>ROS_indigo</dep>
         <dep>ROSPlan</dep>
         <dep>robotican</dep>
         <dep>bgumodo</dep>
         <run dir="~/catkin_ws">
-            # make pkgs and expend env
+            # make pkgs
             catkin_make
-            source devel/setup.bash
+        </run>
+        <run dir="~">
+            # expend shell env
+            echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
         </run>
     </dep>
 
@@ -33,7 +36,10 @@
     </dep>
 
     <dep name="init_ws">
-        <run dir="~">
+        <cond name="dir_check" complement="true">
+
+        </cond>
+        <run dir="~" cond="dir_check">
             mkdir -p ~/catkin_ws/src
         </run>
         <run dir="~/catkin_ws/src">
