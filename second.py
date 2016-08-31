@@ -1,7 +1,10 @@
 from subprocess import call
-from os.path import expanduser
+from os.path import dirname, abspath, expanduser
+from os import chmod, stat, remove
+from stat import S_IEXEC
 from xml.etree import ElementTree
 from sys import argv
+
 
 # second version: build a new sh script for each run
 
@@ -10,12 +13,15 @@ from sys import argv
 # TODO: add 'tree' command
 
 INSTALL_XML = 'deps.xml'
+COMPILED_BASH = 'inst.sh'
 LIST = False
 ASK = False
+COMPILE = False
 NO_INST = False
 NO_INST_LIST = []
 ONLY_INST = False
 ONLY_INS_LIST = []
+MY_DIR = dirname(abspath(__file__))
 
 # parse cmd line args
 for i in range(1, len(argv)):
@@ -23,11 +29,13 @@ for i in range(1, len(argv)):
         LIST = True
     elif argv[i]=='-a' or argv[i]=='--ask':
         ASK = True
-    elif argv[i]=='-d' or argv[i]=="--dont_install":
+    elif argv[i]=='-c' or argv[i]=='--compile':
+        COMPILE = True
+    elif argv[i]=='-r' or argv[i]=="--remove_dep":
         NO_INST = True
         NO_INST_LIST = argv[i+1:len(argv)]
         break
-    elif argv[i]=='-r' or argv[i]=="--roots":
+    elif argv[i]=='-d' or argv[i]=="--dep":
         ONLY_INST = True
         ONLY_INS_LIST = argv[i+1:len(argv)]
         break
@@ -37,19 +45,19 @@ class Bash:
     def __init__(self, dep, raw_bash, dir=None):
         self.dep = dep
         self.bash = [ln.strip() for ln in raw_bash.strip().splitlines()]
-        self.dir = dir
+        # if no dir val, use absolute path
+        if dir is None:
+            self.dir = MY_DIR
+        else:
+            self.dir = expanduser(dir)
 
-    def execute(self, file):
-        # execute bash line
+    def to_file(self, file, prev_dir, pref):
+        # write bash line + check for error
         for ln in self.bash:
-            print(ln)
-            # dir and non dir cases
-            if self.dir!=None:
-                execode = call(ln, cwd=expanduser(self.dir), shell=True)
-            else:
-                execode = call(ln, shell=True)
-            if execode:
-                raise RuntimeError("Error while executing dependency '%s': '%s'" %(self.dep, ln))
+            if prev_dir!=self.dir:
+                file.write("%scd %s\n" %(pref, self.dir))
+            file.write("%s%s\n%sif [ $? != 0]; then exit $?; fi\n" %(pref, ln, pref))
+        return self.dir
 
 # class represents a single dependency
 class Dep:
@@ -75,11 +83,15 @@ class Dep:
     def add_bash(self, raw_bash, dir=None):
         self.bashes.append(Bash(self.name, raw_bash, dir))
 
-    def execute(self):
-        print("[Executing Dependency: %s]" %self.name)
-        # execute bashes
+    def to_file(self, file, prev_dir, ask):
+        pref = ""
+        if ask:
+            pref = "        "
+        file.write("echo \"%s[Installing Dependency: %s]\"\n" %(pref, self.name))
+        # write bashes
         for bash in self.bashes:
-            bash.execute()
+            prev_dir = bash.to_file(file, prev_dir, pref)
+        return prev_dir
 
 # class represents a full dependency tree
 class DepTree:
@@ -137,43 +149,52 @@ class DepTree:
             for dep in self.dep_in_me[branch]:
                 dep.remove_dep(branch)
 
-    def execute(self, ask=False):
-        self.__executed__ = []
+    # compiles deps to a bash file
+    def to_file(self, filename, ask=False):
+        # open file and get dep list
+        file = open(filename, 'w')
+        file.write("INST_DIR=\"%s\"\n" %MY_DIR)
+        l = self.__extract__()
+        # write deps to file
+        prev_dir = MY_DIR
+        for dep in l:
+            # add question, in case of -ask
+            if ask:
+                prev_dir = "" # in case of -ask, always 'cd' before executing dep
+                file.write("while true; do\n"
+                           "    read -p \"Should I install '%s'? [y/n] \" yn\n"
+                           "    case $yn in\n"
+                           "        [Yy]* ) echo;\n" %dep.name)
+            prev_dir = dep.to_file(file, prev_dir, ask)
+            if ask:
+                file.write("\n        break;;\n"
+                           "        [Nn]* ) break;;\n"
+                           "            * ) echo;;\n"
+                           "    esac\n"
+                           "done\n")
+        # close file
+        file.close()
+
+    # returns a list of deps to be executed by order
+    def __extract__(self):
+        l = []
         for root in self.roots:
-            self.__rec_execute__(root, ask)
+            self.__rec_extract__(root, l)
+        return l
 
-    # helper recursive, to be used by execute()
-    def __rec_execute__(self, dep, ask):
-        for prev_dep in dep.get_deps():
-            # don't execute if you already have
-            if not prev_dep.name in self.__executed__:
-                self.__rec_execute__(prev_dep, ask)
-
-        ans = ''
-        if not ask: ans = 'y'
-        while ans!='y' and ans!='n':
-            print("Should I install '%s'? [y/n]" %dep.name)
-            ans = input()
-        if ans=='y':
-            dep.execute()
-        self.__executed__.append(dep.name)
-
-    def list(self):
-        self.__list_count__ = 0
-        self.__listed__ = []
-        print("[Installation Order]")
-        for root in self.roots:
-            self.__rec_list__(root)
-
-    # helper recursive, to be used by list()
-    def __rec_list__(self, dep):
+    # helper recursive, to be used by __extract__()
+    def __rec_extract__(self, dep, l):
         for prev_dep in dep.get_deps():
             # make sure no dep is printed more then once
-            if not prev_dep.name in self.__listed__:
-                self.__rec_list__(prev_dep)
-        self.__listed__.append(dep.name)
-        self.__list_count__ += 1
-        print("%3i   %s" %(self.__list_count__, dep.name))
+            if not prev_dep in l:
+                self.__rec_extract__(prev_dep, l)
+        l.append(dep)
+
+    # list executed deps in-order
+    def list(self):
+        print("[Installation Order]")
+        for i, dep in enumerate(self.__extract__()):
+            print("%3i   %s" % (i+1, dep.name))
 
 dt = DepTree(INSTALL_XML)
 if NO_INST:
@@ -192,4 +213,16 @@ if ONLY_INST:
 if LIST:
     dt.list()
 else:
-    dt.execute(ASK)
+    dt.to_file(COMPILED_BASH, ASK)
+    if not COMPILE:
+        # chmod COMPILED_BASH u+x
+        curr_stat = stat(COMPILED_BASH).st_mode
+        chmod(COMPILED_BASH, curr_stat | S_IEXEC)
+        # run bash
+        ex_code = call("./%s" %COMPILED_BASH, shell=True)
+        if ex_code:
+            print("Installation is not successful; Something went wrong...")
+        else:
+            print("Installation was successful!")
+        # delete bash
+        remove(COMPILED_BASH)
