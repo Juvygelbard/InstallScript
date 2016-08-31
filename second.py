@@ -57,7 +57,7 @@ class Bash:
             file.write("%scd %s\n" % (pref, self.dir))
         # write bash line + check for error
         for ln in self.bash:
-            file.write("%s%s\n%sif [ $? != 0]; then exit $?; fi\n" %(pref, ln, pref))
+            file.write("%s%s\n%sres=$?; if [ $res != 0 ]; then exit $res; fi\n" %(pref, ln, pref))
         return self.dir
 
 # class represents a single dependency
@@ -221,8 +221,8 @@ else:
         chmod(COMPILED_BASH, curr_stat | S_IEXEC)
         # run bash
         ex_code = call("./%s" %COMPILED_BASH, shell=True)
-        if ex_code:
-            print("Installation is not successful; Something went wrong...")
+        if ex_code!=0:
+            print("Installation was not successful; Something went wrong...")
         else:
             print("Installation was successful!")
         # delete bash
