@@ -43,9 +43,23 @@ for i in range(1, len(argv)):
         NO_PREV = True
         NO_PREV_LIST = argv[i + 1:len(argv)]
         break
+
+class Cond:
+    def __init__(self, name, raw_cond, dir=None):
+        self.name = name
+        self.cond = [ln.strip() for ln in raw_cond.strip().splitlines()]
+        # if no dir val, use absolute path
+        if dir is None:
+            self.dir = MY_DIR
+        else:
+            self.dir = expanduser(dir)
+
+    def to_file(self, file):
+        pass
+
 # class represents a single executable bash
 class Bash:
-    def __init__(self, dep, raw_bash, dir=None):
+    def __init__(self, dep, raw_bash, cond=None, dir=None):
         self.dep = dep
         self.bash = [ln.strip() for ln in raw_bash.strip().splitlines()]
         # if no dir val, use absolute path
@@ -53,6 +67,7 @@ class Bash:
             self.dir = MY_DIR
         else:
             self.dir = expanduser(dir)
+        self.cond = cond
 
     def to_file(self, file, prev_dir, pref):
         # cd dir if needed
@@ -88,12 +103,11 @@ class Dep:
     def clear_deps(self):
         self.deps.clear()
 
-    def add_bash(self, raw_bash, dir=None):
-        self.bashes.append(Bash(self.name, raw_bash, dir))
+    def add_bash(self, raw_bash, cond=None, dir=None):
+        self.bashes.append(Bash(self.name, raw_bash, cond, dir))
 
-    def add_cond(self, raw_cond):
-        pass
-    # TODO: continue from here
+    def add_cond(self, name, raw_cond, dir=None):
+        self.conds.update({name : Cond(name, raw_cond, dir)})
 
     def to_file(self, file, prev_dir, ask):
         pref = ""
@@ -127,10 +141,23 @@ class DepTree:
             # build this dep
             dep_name = raw_dep.get('name')
             new_dep = Dep(dep_name)
+
+            # build conds
+            for cond in raw_dep.findall('cond'):
+                name = cond.get('name')
+                dir = cond.get('dir')
+                raw_cond = cond.text
+                new_dep.add_cond(name, raw_cond, dir)
+
+            # build bashes
             for bash in raw_dep.findall('run'):
                 dir = bash.get('dir')
+                cond = bash.get('cond')
+                if not cond is None:
+                    if not cond in new_dep.conds:
+                        raise RuntimeError("Cannot resolve cond: %s" % cond)
                 raw_bash = bash.text
-                new_dep.add_bash(raw_bash, dir)
+                new_dep.add_bash(raw_bash, cond, dir)
             self.deps.update({dep_name: new_dep})
 
             # add my deps to be resolved later
