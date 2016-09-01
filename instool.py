@@ -20,6 +20,7 @@ NO_PREV = False
 TREE = False
 
 MY_DIR = dirname(abspath(__file__))
+PREF_STR = "	"
 
 # parse cmd line args
 for i in range(1, len(argv)):
@@ -45,17 +46,34 @@ for i in range(1, len(argv)):
         break
 
 class Cond:
-    def __init__(self, name, raw_cond, dir=None):
+    def __init__(self, name, raw_cond, dir=None, complement=False):
         self.name = name
-        self.cond = [ln.strip() for ln in raw_cond.strip().splitlines()]
+        self.cond = [ln.strip() for ln in raw_cond.strip().splitlines() if ln.strip()[0]!="#"]
+        self.complement = complement
         # if no dir val, use absolute path
         if dir is None:
             self.dir = MY_DIR
         else:
             self.dir = expanduser(dir)
 
-    def to_file(self, file):
-        pass
+    def to_file(self, prev_dir, file, pref):
+        if prev_dir != self.dir:
+            file.write("%scd %s\n" %(PREF_STR*pref, self.dir))
+        for i, ln in enumerate(self.cond):
+            file.write("%s%s\n"
+                       "%scond%i=$?\n"
+                       "%s" %(PREF_STR*pref, ln, PREF_STR*pref, i, PREF_STR*pref))
+        file.write("if")
+        if self.complement:
+            file.write(" !(")
+        for i in range(len(self.cond)):
+            file.write(" [ $cond%i == 0 ]" %i)
+            if i < len(self.cond)-1:
+                file.write(" &&")
+        if self.complement:
+            file.write(")")
+        file.write("; then\n")
+        return self.dir
 
 # class represents a single executable bash
 class Bash:
@@ -70,12 +88,19 @@ class Bash:
         self.cond = cond
 
     def to_file(self, file, prev_dir, pref):
+        if not self.cond is None:
+            prev_dir = self.cond.to_file(prev_dir, file, pref)
+            pref += 1
         # cd dir if needed
         if prev_dir != self.dir:
-            file.write("%scd %s\n" % (pref, self.dir))
+            file.write("%scd %s\n" % (PREF_STR*pref, self.dir))
         # write bash line + check for error
         for ln in self.bash:
-            file.write("%s%s\n%sres=$?; if [ $res != 0 ]; then exit $res; fi\n" %(pref, ln, pref))
+            file.write("%s%s\n"
+                       "%sres=$?; if [ $res != 0 ]; then exit $res; fi\n" %(PREF_STR*pref, ln, PREF_STR*pref))
+        if not self.cond is None:
+            pref -= 1
+            file.write("%sfi\n" %(PREF_STR*pref))
         return self.dir
 
 # class represents a single dependency
@@ -106,14 +131,11 @@ class Dep:
     def add_bash(self, raw_bash, cond=None, dir=None):
         self.bashes.append(Bash(self.name, raw_bash, cond, dir))
 
-    def add_cond(self, name, raw_cond, dir=None):
-        self.conds.update({name : Cond(name, raw_cond, dir)})
+    def add_cond(self, name, raw_cond, dir=None, complement=False):
+        self.conds.update({name : Cond(name, raw_cond, dir, complement)})
 
-    def to_file(self, file, prev_dir, ask):
-        pref = ""
-        if ask:
-            pref = "        "
-        file.write("%secho \"[Installing Dependency: %s]\"\n" %(pref, self.name))
+    def to_file(self, file, prev_dir, pref):
+        file.write("%secho \"[Installing Dependency: %s]\"\n" %(PREF_STR*pref, self.name))
         # write bashes
         for bash in self.bashes:
             prev_dir = bash.to_file(file, prev_dir, pref)
@@ -130,7 +152,7 @@ class DepTree:
 
         # check root attribute
         if et.tag != 'install':
-            raise RuntimeError("'%s' is not an installation xml file" %filename)
+            raise RuntimeError("'%s' is not an instool xml file" %filename)
 
         # maps name->new dep
         self.deps = {}
@@ -146,15 +168,20 @@ class DepTree:
             for cond in raw_dep.findall('cond'):
                 name = cond.get('name')
                 dir = cond.get('dir')
+                complement = cond.get('complement')
+                if not complement is None:
+                    complement = complement.lower() == 'true'
                 raw_cond = cond.text
-                new_dep.add_cond(name, raw_cond, dir)
+                new_dep.add_cond(name, raw_cond, dir, complement)
 
             # build bashes
             for bash in raw_dep.findall('run'):
                 dir = bash.get('dir')
                 cond = bash.get('cond')
                 if not cond is None:
-                    if not cond in new_dep.conds:
+                    if cond in new_dep.conds:
+                        cond = new_dep.conds[cond]
+                    else:
                         raise RuntimeError("Cannot resolve cond: %s" % cond)
                 raw_bash = bash.text
                 new_dep.add_bash(raw_bash, cond, dir)
@@ -196,21 +223,26 @@ class DepTree:
         l = self.__extract__()
         # write deps to file
         prev_dir = MY_DIR
+        pref = 0
         for dep in l:
             # add question, in case of -ask
             if ask:
                 prev_dir = "" # in case of -ask, always 'cd' before executing dep
-                file.write("while true; do\n"
-                           "    read -p \"Should I install '%s'? [y/n] \" yn\n"
-                           "    case $yn in\n"
-                           "        [Yy]* ) echo;\n" %dep.name)
-            prev_dir = dep.to_file(file, prev_dir, ask)
+                file.write("%swhile true; do\n"
+                           "%sread -p \"Should I install '%s'? [y/n] \" yn\n"
+                           "%scase $yn in\n"
+                           "%s[Yy]* ) echo;\n" %(PREF_STR*pref, PREF_STR*(pref+1), dep.name,
+                                                         PREF_STR*(pref+1), PREF_STR*(pref+2)))
+                pref += 3
+            prev_dir = dep.to_file(file, prev_dir, pref)
             if ask:
-                file.write("\n        break;;\n"
-                           "        [Nn]* ) break;;\n"
-                           "            * ) echo;;\n"
-                           "    esac\n"
-                           "done\n")
+                pref -= 3
+                file.write("\n%sbreak;;\n"
+                           "%s[Nn]* ) break;;\n"
+                           "%s    * ) echo;;\n"
+                           "%sesac\n"
+                           "%sdone\n" %(PREF_STR*(pref+3), PREF_STR*(pref+2), PREF_STR*(pref+2),
+                                        PREF_STR*(pref+1), PREF_STR*pref))
         # close file
         file.close()
 
@@ -267,7 +299,7 @@ if ONLY_INST:
 
 if NO_PREV:
     dt.roots = []
-    for root_name in ONLY_INST_LIST:
+    for root_name in NO_PREV_LIST:
         if not root_name in dt.deps:
             raise RuntimeError("Cannot resolve root: %s" % root_name)
         dt.deps[root_name].clear_deps()
@@ -284,7 +316,7 @@ else:
         curr_stat = stat(COMPILED_BASH).st_mode
         chmod(COMPILED_BASH, curr_stat | S_IEXEC)
         # run bash
-        ex_code = call("./%s" %COMPILED_BASH, shell=True)
+        ex_code = call("bash ./%s" %COMPILED_BASH, shell=True)
         if ex_code!=0:
             print("Installation was not successful; Something went wrong...")
         else:

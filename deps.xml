@@ -15,7 +15,11 @@
     </dep>
 
     <dep name="ROS_indigo">
-        <run dir="~">
+        <cond name="ros_check" complement="true">
+            # see if ROS is installed
+            rosversion ros
+        </cond>
+        <run dir="~" cond="ros_check">
             # accept software from packages.ros.org
             sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
             # setup keys
@@ -37,12 +41,17 @@
 
     <dep name="init_ws">
         <cond name="dir_check" complement="true">
-
+            # make sure folder exist
+            [ -d ~/catkin_ws/src ]
+        </cond>
+        <cond name="git_check" complement="true">
+            # make sure git is initialized
+            [ -d ~/catkin_ws/src/.git ]
         </cond>
         <run dir="~" cond="dir_check">
             mkdir -p ~/catkin_ws/src
         </run>
-        <run dir="~/catkin_ws/src">
+        <run dir="~/catkin_ws/src" cond="git_check">
             git init
         </run>
     </dep>
@@ -51,6 +60,12 @@
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
         <dep>move_base</dep>
+        <cond name="check_ROSPlan" dir="~/catkin_ws/src">
+            [ -d "ROSPlan" ]
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_ROSPlan">
+            rm -f -r ROSPlan
+        </run>
         <run dir="~/catkin_ws/src">
             # get prerequisites
             sudo apt-get install flex ros-indigo-mongodb-store ros-indigo-tf2-bullet freeglut3-dev
@@ -71,7 +86,11 @@
     <dep name="move_base">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run dir="~/catkin_ws/src">
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find move_base
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_pkg">
             sudo apt-get install ros-indigo-move-base
         </run>
     </dep>
@@ -85,25 +104,34 @@
         <dep>gazebo_ros_pkgs</dep>
         <dep>serial</dep>
         <dep>dynamixel_motor</dep>
+        <cond name="check_robotican" dir="~/catkin_ws/src">
+            [ -d "robotican" ]
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_robotican">
+            rm -f -r robotican
+        </run>
         <run dir="~/catkin_ws/src">
             # currently using bgumodo/robotican/temp_branch
             # clone repository
             git clone https://github.com/bgumodo/robotican/ -b temp_branch --single-branch
-        </run>
-        <run>
+            cd $INST_DIR
             # copy current work file
             cp -f aux/demo_pick_node.cpp ~/catkin_ws/src/robotican/robotican_demos/src/
-        </run>
-        <run dir="~/catkin_ws">
+            cd ~/catkin_ws
             # compile
             catkin_make
+            cd src
         </run>
     </dep>
 
     <dep name="qt_ros">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run dir="~/catkin_ws/src">
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find qt_build
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_pkg">
             git clone https://github.com/stonier/qt_ros -b indigo --single-branch
         </run>
     </dep>
@@ -111,7 +139,11 @@
     <dep name="moveit">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find moveit_core
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install ros-indigo-moveit-full
         </run>
     </dep>
@@ -119,7 +151,11 @@
     <dep name="control_toolbox">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            dpkg -s ros-indigo-ros-controllers
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
         </run>
     </dep>
@@ -127,7 +163,11 @@
     <dep name="gazebo_ros_pkgs">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            dpkg -s ros-indigo-gazebo-ros-control
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install ros-indigo-gazebo-ros-pkgs ros-indigo-gazebo-ros-control
         </run>
     </dep>
@@ -135,21 +175,29 @@
     <dep name="serial">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run dir="~/catkin_ws/src">
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find serial
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_pkg">
             # get code
             git clone https://github.com/wjwwood/serial.git
-        </run>
-        <run dir="~/catkin_ws/src/serial">
+            cd serial
             # make and install
             make
             make install
+            cd ../
         </run>
     </dep>
 
     <dep name="dynamixel_motor">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find dynamixel_msgs
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install ros-indigo-dynamixel-motor
         </run>
     </dep>
@@ -160,6 +208,12 @@
         <dep>audio_common</dep>
         <dep>pocketsphinx</dep>
         <dep>gstreamer-0.10</dep>
+        <cond name="check_bgumodo" dir="~/catkin_ws/src">
+            [ -d "bgumodo-dev" ]
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_bgumodo">
+            rm -f -r bgumodo-dev
+        </run>
         <run dir="~/catkin_ws/src">
             # get code
             git clone https://github.com/bgumodo/bgumodo-dev.git
@@ -169,7 +223,11 @@
     <dep name="audio_common">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run dir="~/catkin_ws/src">
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find sound_play
+        </cond>
+        <run dir="~/catkin_ws/src" cond="check_pkg">
             git clone https://github.com/ros-drivers/audio_common -b indigo-devel --single-branch
         </run>
     </dep>
@@ -177,7 +235,11 @@
     <dep name="pocketsphinx">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find pocketsphinx
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install ros-indigo-pocketsphinx
         </run>
     </dep>
@@ -185,7 +247,11 @@
     <dep name="gstreamer-0.10">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <run>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            dpkg -s libgstreamer-plugins-base0.10-dev
+        </cond>
+        <run cond="check_pkg">
             sudo apt-get install libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
         </run>
     </dep>
