@@ -66,6 +66,11 @@
         <run dir="~/catkin_ws/src" cond="check_ROSPlan">
             rm -f -r ROSPlan
         </run>
+        <run dir="~/catkin_ws">
+            # make and source previous deps
+            catkin_make
+            source devel/setup.bash
+        </run>
         <run dir="~/catkin_ws/src">
             # get prerequisites
             sudo apt-get install flex ros-indigo-mongodb-store ros-indigo-tf2-bullet freeglut3-dev
@@ -76,10 +81,6 @@
         <run>
             # copy updated .pddl file
             cp -f aux/domain.pddl ~/catkin_ws/src/rosplan/rosplan_config/planner/
-        </run>
-        <run dir="~/catkin_ws">
-            # compile
-            catkin_make
         </run>
     </dep>
 
@@ -110,6 +111,11 @@
         <run dir="~/catkin_ws/src" cond="check_robotican">
             rm -f -r robotican
         </run>
+        <run dir="~/catkin_ws">
+            # make and source previous deps
+            catkin_make
+            source devel/setup.bash
+        </run>
         <run dir="~/catkin_ws/src">
             # currently using bgumodo/robotican/temp_branch
             # clone repository
@@ -117,10 +123,6 @@
             cd $INST_DIR
             # copy current work file
             cp -f aux/demo_pick_node.cpp ~/catkin_ws/src/robotican/robotican_demos/src/
-            cd ~/catkin_ws
-            # compile
-            catkin_make
-            cd src
         </run>
     </dep>
 
@@ -213,6 +215,11 @@
         </cond>
         <run dir="~/catkin_ws/src" cond="check_bgumodo">
             rm -f -r bgumodo-dev
+        </run>
+        <run dir="~/catkin_ws">
+            # make and source previous deps
+            catkin_make
+            source devel/setup.bash
         </run>
         <run dir="~/catkin_ws/src">
             # get code
