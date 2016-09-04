@@ -1,6 +1,6 @@
 # Instool
 ## Introduction
-This tool was created in-order to provide a simple and modular installation tool for the bgu komodo project.
+This scripting-tool was created in-order to provide a simple and modular installation for the bgu komodo project.
 It uses an XML which represents an installation dependency tree.
 When executed, instool.py compiles the XML to a Linux bash script and runs it.
 Note the instool.py should be executed using python3.
