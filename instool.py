@@ -7,8 +7,6 @@ from sys import argv
 
 # final [compiler] version, including cond support and help
 
-# TODO: add 'cond' option
-
 INSTALL_XML = 'deps.xml'
 COMPILED_BASH = 'inst.sh'
 LIST = False
