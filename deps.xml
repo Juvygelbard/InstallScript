@@ -93,9 +93,22 @@
         </run>
     </dep>
 
+    <dep name="dynamixel_motor">
+        <dep>ROS_indigo</dep>
+        <dep>init_ws</dep>
+        <cond name="check_pkg" complement="true">
+            # check if package already installed
+            rospack find dynamixel_msgs
+        </cond>
+        <run cond="check_pkg">
+            sudo apt-get install ros-indigo-dynamixel-motor
+        </run>
+    </dep>
+
     <dep name="robotican">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
+        <dep>dynamixel_motor</dep>
         <cond name="check_robotican" dir="~/catkin_ws/src">
             [ -d "robotican" ]
         </cond>
