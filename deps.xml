@@ -40,6 +40,7 @@
     </dep>
 
     <dep name="init_ws">
+        <dep>ROS_indigo</dep>
         <cond name="dir_check" complement="true">
             # make sure folder exist
             [ -d ~/catkin_ws/src ]
@@ -52,14 +53,22 @@
             mkdir -p ~/catkin_ws/src
         </run>
         <run dir="~/catkin_ws/src" cond="git_check">
+            catkin_init_workspcae
             git init
+        </run>
+        <run dir="~/catkin_ws">
+            catkin_make
+        </run>
+        <run dir="~">
+            echo "~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+            source .bashrc
         </run>
     </dep>
 
     <dep name="ROSPlan">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <dep>move_base</dep>
+        <dep>robotican</dep>
         <cond name="check_ROSPlan" dir="~/catkin_ws/src">
             [ -d "ROSPlan" ]
         </cond>
@@ -84,27 +93,9 @@
         </run>
     </dep>
 
-    <dep name="move_base">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            rospack find move_base
-        </cond>
-        <run dir="~/catkin_ws/src" cond="check_pkg">
-            sudo apt-get install ros-indigo-move-base
-        </run>
-    </dep>
-
     <dep name="robotican">
         <dep>ROS_indigo</dep>
         <dep>init_ws</dep>
-        <dep>qt_ros</dep>
-        <dep>moveit</dep>
-        <dep>control_toolbox</dep>
-        <dep>gazebo_ros_pkgs</dep>
-        <dep>serial</dep>
-        <dep>dynamixel_motor</dep>
         <cond name="check_robotican" dir="~/catkin_ws/src">
             [ -d "robotican" ]
         </cond>
@@ -119,90 +110,13 @@
         <run dir="~/catkin_ws/src">
             # currently using bgumodo/robotican/temp_branch
             # clone repository
-            git clone https://github.com/bgumodo/robotican/ -b temp_branch --single-branch
-            cd $INST_DIR
-            # copy current work file
-            cp -f aux/demo_pick_node.cpp ~/catkin_ws/src/robotican/robotican_demos/src/
+            https://github.com/robotican/robotican
+        </run>
+        <run dir="~/catkin_ws/src/robotican/robotican/installations">
+			. /install.sh
         </run>
     </dep>
 
-    <dep name="qt_ros">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            rospack find qt_build
-        </cond>
-        <run dir="~/catkin_ws/src" cond="check_pkg">
-            git clone https://github.com/stonier/qt_ros -b indigo --single-branch
-        </run>
-    </dep>
-
-    <dep name="moveit">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            rospack find moveit_core
-        </cond>
-        <run cond="check_pkg">
-            sudo apt-get install ros-indigo-moveit-full
-        </run>
-    </dep>
-
-    <dep name="control_toolbox">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            dpkg -s ros-indigo-ros-controllers
-        </cond>
-        <run cond="check_pkg">
-            sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
-        </run>
-    </dep>
-
-    <dep name="gazebo_ros_pkgs">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            dpkg -s ros-indigo-gazebo-ros-control
-        </cond>
-        <run cond="check_pkg">
-            sudo apt-get install ros-indigo-gazebo-ros-pkgs ros-indigo-gazebo-ros-control
-        </run>
-    </dep>
-
-    <dep name="serial">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            rospack find serial
-        </cond>
-        <run dir="~/catkin_ws/src" cond="check_pkg">
-            # get code
-            git clone https://github.com/wjwwood/serial.git
-            cd serial
-            # make and install
-            make
-            make install
-            cd ../
-        </run>
-    </dep>
-
-    <dep name="dynamixel_motor">
-        <dep>ROS_indigo</dep>
-        <dep>init_ws</dep>
-        <cond name="check_pkg" complement="true">
-            # check if package already installed
-            rospack find dynamixel_msgs
-        </cond>
-        <run cond="check_pkg">
-            sudo apt-get install ros-indigo-dynamixel-motor
-        </run>
-    </dep>
 
     <dep name="bgumodo">
         <dep>ROS_indigo</dep>
