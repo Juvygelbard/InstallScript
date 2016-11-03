@@ -60,7 +60,7 @@
             catkin_make
         </run>
         <run dir="~">
-            echo "~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+            echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
             source .bashrc
         </run>
     </dep>
