@@ -53,7 +53,7 @@
             mkdir -p ~/catkin_ws/src
         </run>
         <run dir="~/catkin_ws/src" cond="git_check">
-            catkin_init_workspcae
+            catkin_init_workspace
             git init
         </run>
         <run dir="~/catkin_ws">
@@ -110,10 +110,10 @@
         <run dir="~/catkin_ws/src">
             # currently using bgumodo/robotican/temp_branch
             # clone repository
-            https://github.com/robotican/robotican
+            git clone https://github.com/robotican/robotican
         </run>
         <run dir="~/catkin_ws/src/robotican/robotican/installations">
-			. /install.sh
+            ./install.sh
         </run>
     </dep>
 
